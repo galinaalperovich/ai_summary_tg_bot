@@ -12,7 +12,7 @@ This Telegram bot will extract the content of an article from a given URL and su
 
 ## Usage:
 
-1. Send a link to the article to the bot
+1. Send a URL that contains an article to the bot
 2. Wait for the summary
 
 ## How to run locally
