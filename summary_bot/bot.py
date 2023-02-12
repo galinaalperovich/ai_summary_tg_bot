@@ -34,7 +34,7 @@ async def get_summary(message: types.Message):
             )
             return
 
-        await message.reply("Summarizing an article...")
+        await message.reply("Summarizing the article...")
         logging.info("Extracting article...")
         article = await extract_article(user_input)
 

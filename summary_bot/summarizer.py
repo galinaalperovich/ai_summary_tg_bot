@@ -31,8 +31,8 @@ async def summarize_article(content: str, message=None) -> str:
     content_parts_summaries_encoded = model.generate(
         content_parts_dict["input_ids"],
         num_beams=3,
-        min_length=20,
-        max_length=100,
+        min_length=50,
+        max_length=200,
         early_stopping=True,
     )
     content_parts_summaries = tokenizer.batch_decode(
