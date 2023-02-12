@@ -1,4 +1,7 @@
 # Summarize a URL with AI and Telegram bot
+Sometimes you don't want to read the whole article, but you want to know what it's about. 
+
+This Telegram bot will extract the content of an article from a given URL and summarize it for you with the help of AI summarization model.
 
 ## Tools:
 
