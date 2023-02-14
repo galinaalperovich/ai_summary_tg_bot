@@ -1,18 +1,7 @@
-import logging
-import os
-
 from aiogram import Bot, Dispatcher, executor, types
+
 from summary_bot.scraper import extract_article
-
-logging.basicConfig(level=logging.INFO)
-
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-if not BOT_TOKEN:
-    logging.error("BOT_TOKEN env var is not found, cannot start the bot without it, create with @BotFather Telegram bot")
-    raise ValueError("BOT_TOKEN env variable is not found")
-else:
-    logging.info("BOT_TOKEN found, starting the bot")
-
+from summary_bot.settings import BOT_TOKEN, MODEL_NAME, logger
 from summary_bot.summarizer import summarize_article
 
 bot = Bot(token=BOT_TOKEN, parse_mode=types.ParseMode.HTML)
@@ -35,15 +24,18 @@ async def get_summary(message: types.Message):
             return
 
         await message.reply("Summarizing the article...")
-        logging.info("Extracting article...")
+        logger.info("Extracting article...")
         article = await extract_article(user_input)
 
-        logging.info("Summarizing article...")
-        summary = await summarize_article(article, message)
+        logger.info("Summarizing article...")
+        summary = await summarize_article(article, message, model_name=MODEL_NAME)
+        logger.info("Done summarizing article")
+
         await message.reply(summary)
 
     except Exception as err:
-        await message.reply(f"Something went wrong :/ \n\nError: {err}")
+        logger.error("Error while summarizing article", exc_info=err)
+        await message.reply(f"Error while summarizing article:\n\n{err}")
 
 
 if __name__ == "__main__":

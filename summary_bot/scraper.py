@@ -1,6 +1,4 @@
 import asyncio
-import logging
-import os
 import subprocess
 from time import sleep
 
@@ -8,25 +6,13 @@ from pyppeteer import launch
 from pyppeteer.page import Page
 from trafilatura import extract
 
-NUM_RELOADS = 1
-
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) "
-    "Chrome/83.0.4103.97 Safari/537.36",
-}
-EXTRA_HTTP_HEADERS = {"Accept-Language": "en-US;q=0.8,en;q=0.7"}
-
-WAIT_COND = ["domcontentloaded", "networkidle0"]
-
-FROM_DOCKER = os.getenv("FROM_DOCKER")
-
-if not FROM_DOCKER:
-    logging.info("Running locally")
-    FROM_DOCKER = False
-else:
-    logging.info("Running from Docker")
-    FROM_DOCKER = True
+from summary_bot.settings import (
+    FROM_DOCKER,
+    HEADERS,
+    EXTRA_HTTP_HEADERS,
+    WAIT_COND,
+    logger,
+)
 
 
 async def extract_article(url: str) -> str:
@@ -76,7 +62,7 @@ class Scraper:
             # await kill_browser_badly(self.browser)
             pass
         else:
-            print("setting browser")
+            logger.info("Setting browser")
             if FROM_DOCKER:
                 executable_path = "google-chrome-stable"
             else:
@@ -86,7 +72,7 @@ class Scraper:
                 executablePath=executable_path,
                 **self._get_browser_args(from_docker=FROM_DOCKER),
             )
-            print("setting browser done")
+            logger.info("Setting browser done")
 
     def _get_browser_args(self, from_docker=False) -> dict:
         args = {
@@ -116,7 +102,7 @@ class Scraper:
         return args
 
     async def get_response(self, url: str) -> Page:
-        print("check the browser")
+        logger.info("Check the browser")
         if not self.browser:
             await self.set_browser()
         page: Page = (await self.browser.pages())[0]
@@ -141,5 +127,6 @@ class Scraper:
         response = await asyncio.wait_for(load_task, timeout=self.timeout)
         status_code = response.status
         if status_code != 200:
+            logger.error(f"Received bad status code: {status_code}")
             raise Exception("Bad status code")
         return page

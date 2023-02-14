@@ -1,24 +1,35 @@
-# Summarize a URL with AI and Telegram bot
-Sometimes you don't want to read the whole article, but you want to know what it's about. 
+# Telegram bot with AI article Summarizer
 
-This Telegram bot will extract the content of an article from a given URL and summarize it for you with the help of AI summarization model.
+Sometimes you don't want to read the whole article, but you want to know what it's about.
 
-## Tools:
+This Telegram bot will extract the content of an article from a given URL and summarize it for you with the help of AI
+summarization model.
 
-1. Telegram bot
-2. Hugging Face BART model [sshleifer/distilbart-cnn-12-6](https://huggingface.co/sshleifer/distilbart-cnn-12-6)
-3. Pypeteer to scrape the article from the website
-4. Trafilatura to extract the article from the HTML
+## Usage
 
-## Usage:
+1. Create a Telegram bot with [BotFather](https://t.me/botfather)
+2. Run the bot locally or deploy with Docker
+3. Send a URL with an article you want to summarize to the bot
+4. Receive summarized article!
 
-1. Send a URL that contains an article to the bot
-2. Wait for the summary
+## Tools under the hood
 
-## Run locally
+1. Telegram bot and `aiogram` library
+2. Hugging Face BART model for summarization
+3. `pyppeteer` headless browser to scrape an article from a given URL
+4. `trafilatura` to extract the article from the HTML (removes all the ads and other stuff)
 
-1. Create a new bot using @BotFather
-2. Create python env and install dependencies
+## How to run
+
+### Environment variables
+
+1. `BOT_TOKEN` - Telegram bot token. Get it by creating in [@BotFather](https://t.me/BotFather)
+2. `MODEL_NAME` - Summarization model name (options: "sshleifer/distilbart-cnn-12-6", "facebook/bart-large-cnn", "
+   facebook/bart-large-xsum"). By default "sshleifer/distilbart-cnn-12-6"
+3. `LOG_LEVEL` - Logging level (options: "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"). By default "INFO"
+4. `FROM_DOCKER` - If the app is running in Docker (options: 1, 0). By default 0
+
+### Run locally
 
 ```shell
 export BOT_TOKEN=<YOUR_TOKEN>
@@ -28,29 +39,34 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
-3. Test main functions (at first, it will download the model, and it will take a few minutes)
+Run tests (at first, it will download the model, and it will take a few minutes)
 
 ```shell
-python tests/test_bot.py
+pytest
 ```
 
-4. Run the bot
+Run the bot
 
 ```shell
 python summary_bot/bot.py
 ```
 
-6. Send a link to the article to your bot in Telegram and get the summary!
+Send to your Telegram bot a link to the article and get the summary!
 
-## Run with Docker
-Warning: It won't work on arm86 (Apple Silicon), I wasn't able to make Pypeteer work in Docker. 
+### Run with Docker
 
-But it works on Debian 10, x86-64.    
+Warning: It won't work on arm86 (Apple Silicon), I wasn't able to make Pypeteer work in Docker.
+
+But it works on Linux/Debian 10, x86-64.
 
 ```shell
 docker build -t ai_summary_bot:latest .
-docker run --rm --init -it --name ai_summary_bot --env BOT_TOKEN="<YOUR_TOKEN>" --env FROM_DOCKER=1 ai_summary_bot:latest
+docker run --rm --init -it --name ai_summary_bot \
+  --env BOT_TOKEN="<YOUR_TOKEN>" \
+  --env FROM_DOCKER=1 \
+  ai_summary_bot:latest
 
 # in case it is not killed by Ctrl+C
 docker kill ai_summary_bot
 ```
+

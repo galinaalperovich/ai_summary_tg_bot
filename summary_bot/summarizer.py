@@ -1,10 +1,7 @@
-import logging
-
 import torch
 from transformers import BartForConditionalGeneration, AutoTokenizer
 
-# MODEL_NAME = "facebook/bart-large-cnn"
-DEFAULT_MODEL_NAME = "sshleifer/distilbart-cnn-12-6"
+from summary_bot.settings import DEFAULT_MODEL_NAME, logger
 
 
 class Singleton(type):
@@ -39,7 +36,7 @@ class SummaryModel(metaclass=Singleton):
         }
 
     def load_model(self):
-        logging.info(f"Loading the summarization model {self.model_name}")
+        logger.info(f"Loading the summarization model {self.model_name}")
         model = BartForConditionalGeneration.from_pretrained(self.model_name)
         tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         model.eval()
@@ -55,8 +52,8 @@ class SummaryModel(metaclass=Singleton):
         input_id_chunks = list(inputs["input_ids"][0].split(self.max_tokens - 2))
         mask_chunks = list(inputs["attention_mask"][0].split(self.max_tokens - 2))
         num_parts = len(input_id_chunks)
-        print("Len", num_parts)
         if message:
+            logger.info(f"Splitting the article into {num_parts} parts")
             await message.reply(
                 f"The article is long, splitting into {num_parts} parts..."
             )
