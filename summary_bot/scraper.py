@@ -1,4 +1,6 @@
 import asyncio
+import logging
+import os
 import subprocess
 from time import sleep
 
@@ -17,6 +19,14 @@ EXTRA_HTTP_HEADERS = {"Accept-Language": "en-US;q=0.8,en;q=0.7"}
 
 WAIT_COND = ["domcontentloaded", "networkidle0"]
 
+FROM_DOCKER = os.getenv("FROM_DOCKER")
+if not FROM_DOCKER:
+    logging.info("Running locally")
+    FROM_DOCKER = False
+else:
+    logging.info("Running from Docker")
+    FROM_DOCKER = True
+
 
 async def extract_article(url: str) -> str:
     """
@@ -28,6 +38,7 @@ async def extract_article(url: str) -> str:
     try:
         page: Page = await scraper.get_response(url)
     except:
+        # sometimes the browser crashes, so we need to kill it and start a new one
         await kill_browser_badly(scraper.browser)
         await scraper.set_browser()
         page: Page = await scraper.get_response(url)
@@ -36,6 +47,10 @@ async def extract_article(url: str) -> str:
 
     # Extract content from the HTML page
     article = extract(content, favor_recall=True)
+
+    # Close the page and the browser
+    await page.close()
+    await scraper.browser.close()
     return article
 
 
@@ -60,16 +75,23 @@ class Scraper:
             # await kill_browser_badly(self.browser)
             pass
         else:
-            self.browser = await launch(**self._get_browser_args())
+            print("setting browser")
+            if FROM_DOCKER:
+                executable_path = "google-chrome-stable"
+            else:
+                executable_path = None
 
-    def _get_browser_args(self) -> dict:
-        return {
+            self.browser = await launch(
+                executablePath=executable_path,
+                **self._get_browser_args(from_docker=FROM_DOCKER),
+            )
+            print("setting browser done")
+
+    def _get_browser_args(self, from_docker=False) -> dict:
+        args = {
             "headless": self.headless,
             "args": [
                 "--lang=en-GB",
-                # "--no-sandbox",
-                # "--single-process",
-                # "--disable-dev-shm-usage",
                 # "--no-zygote",
                 # "--ignore-certificate-errors",
                 # "--ignore-certificate-errors-spki-list",
@@ -80,6 +102,17 @@ class Scraper:
             # "handleSIGHUP": False,
             # "ignoreHTTPSErrors": True,
         }
+        if from_docker:
+            args["args"].extend(
+                [
+                    "--no-sandbox",
+                    "--single-process",
+                    "--disable-dev-shm-usage",
+                    "--disable-setuid-sandbox",
+                ]
+            )
+
+        return args
 
     async def get_response(self, url: str) -> Page:
         print("check the browser")
