@@ -20,6 +20,7 @@ EXTRA_HTTP_HEADERS = {"Accept-Language": "en-US;q=0.8,en;q=0.7"}
 WAIT_COND = ["domcontentloaded", "networkidle0"]
 
 FROM_DOCKER = os.getenv("FROM_DOCKER")
+
 if not FROM_DOCKER:
     logging.info("Running locally")
     FROM_DOCKER = False
