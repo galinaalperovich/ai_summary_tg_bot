@@ -26,7 +26,7 @@ async def extract_article(url: str) -> str:
         page: Page = await scraper.get_response(url)
     except:
         # sometimes the browser crashes, so we need to kill it and start a new one
-        await kill_browser_badly(scraper.browser)
+        await kill_browser(scraper.browser)
         await scraper.set_browser()
         page: Page = await scraper.get_response(url)
 
@@ -41,7 +41,7 @@ async def extract_article(url: str) -> str:
     return article
 
 
-async def kill_browser_badly(browser):
+async def kill_browser(browser):
     browser.pages().close()
     pid = browser.process.pid
     await browser.close()
