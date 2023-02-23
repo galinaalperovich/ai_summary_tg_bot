@@ -15,7 +15,8 @@ else:
     logging.info("BOT_TOKEN found, starting the bot")
 
 # Model configuration
-DEFAULT_MODEL_NAME = "sshleifer/distilbart-cnn-12-6"
+# DEFAULT_MODEL_NAME = "sshleifer/distilbart-cnn-12-6"
+DEFAULT_MODEL_NAME = "facebook/bart-large-cnn"
 MODEL_NAME = os.getenv("MODEL_NAME")
 if not MODEL_NAME:
     MODEL_NAME = DEFAULT_MODEL_NAME

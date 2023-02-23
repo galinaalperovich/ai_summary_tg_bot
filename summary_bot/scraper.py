@@ -33,7 +33,7 @@ async def extract_article(url: str) -> str:
     content = await page.content()
 
     # Extract content from the HTML page
-    article = extract(content, favor_recall=True)
+    article = extract(content, favor_recall=True, include_comments=False)
 
     # Close the page and the browser
     await page.close()
