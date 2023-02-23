@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import torch
 from transformers import BartForConditionalGeneration, AutoTokenizer
 
@@ -23,7 +25,7 @@ class SummaryModel(metaclass=Singleton):
     def get_model_args():
         return {
             "num_beams": 3,
-            "min_length": 50,
+            "min_length": 60,
             "max_length": 200,
             "early_stopping": True,
         }
@@ -42,45 +44,33 @@ class SummaryModel(metaclass=Singleton):
         model.eval()
         return model, tokenizer
 
-    async def prepare_batch(self, content, message):
-        # Create a batch of text parts of max size
-        # https://towardsdatascience.com/how-to-apply-transformers-to-any-length-of-text-a5601410af7f
-
+    async def prepare_batch(
+        self, content, message
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         inputs = self.tokenizer.encode_plus(
             content, return_tensors="pt", add_special_tokens=False
         )
-        input_id_chunks = list(inputs["input_ids"][0].split(self.max_tokens - 2))
-        mask_chunks = list(inputs["attention_mask"][0].split(self.max_tokens - 2))
+        input_id_chunks = list(inputs["input_ids"][0].split(self.max_tokens))
         num_parts = len(input_id_chunks)
         if message:
             logger.info(f"Splitting the article into {num_parts} parts")
             await message.reply(
-                f"The article is long, splitting into {num_parts} parts..."
+                f"Splitting the article into {num_parts} parts..."
             )
-        # get required padding length
-        for i in range(num_parts):
-            pad_len = self.max_tokens - 2 - input_id_chunks[i].shape[0]
-            # check if tensor length satisfies required chunk size
-            if pad_len > 0:
-                # if padding length is more than 0, we must add padding
-                input_id_chunks[i] = torch.cat(
-                    [input_id_chunks[i], torch.Tensor([0] * pad_len)]
-                )
-                mask_chunks[i] = torch.cat(
-                    [mask_chunks[i], torch.Tensor([0] * pad_len)]
-                )
-        input_ids = torch.stack(input_id_chunks)
-        attention_mask = torch.stack(mask_chunks)
-        return {"input_ids": input_ids.long(), "attention_mask": attention_mask.int()}
+        # we want to process the last chunk separately and do not pad it since it leads to poor results
+        chunks = torch.stack(input_id_chunks[:-1])
+        last_chunk = input_id_chunks[-1].unsqueeze(0)
+        return chunks, last_chunk
 
-    def get_summary(self, input_dict: dict):
-        summary_encoded = self.model.generate(
-            input_dict["input_ids"], **self.get_model_args()
-        )
-        summary = self.tokenizer.batch_decode(
-            summary_encoded, **self.get_tokenizer_args()
-        )
-        return summary
+    def get_summary(self, batches: Tuple[torch.Tensor, torch.Tensor]):
+        result = []
+        for batch in batches:
+            summary_encoded = self.model.generate(batch, **self.get_model_args())
+            summary = self.tokenizer.batch_decode(
+                summary_encoded, **self.get_tokenizer_args()
+            )
+            result.extend(summary)
+        return result
 
 
 def _prettify_one(line: str) -> str:
@@ -89,19 +79,21 @@ def _prettify_one(line: str) -> str:
     return line.strip()
 
 
-def prettify(text: str) -> str:
-    parts = [_prettify_one(part) for part in text.split(" .") if len(part) > 3]
-    return ".\n".join(parts)
+def prettify(items) -> str:
+    message_text = ""
+    for item in items:
+        message_text += f"• {_prettify_one(item)}\n\n"
+    return message_text
 
 
 async def summarize_article(
     content: str, message=None, model_name=DEFAULT_MODEL_NAME
 ) -> str:
     """
-    Summarize the article with Hugging Face's Bart model
+    Summarize the article with Hugging Face's model
     """
     model = SummaryModel(model_name)
-    content_parts_dict = await model.prepare_batch(content, message)
-    content_parts_summaries = model.get_summary(content_parts_dict)
-    summary = "\n".join([prettify(summary) for summary in content_parts_summaries])
-    return summary
+    batches = await model.prepare_batch(content, message)
+    content_summaries = model.get_summary(batches)
+    summary_html = prettify(content_summaries)
+    return summary_html
