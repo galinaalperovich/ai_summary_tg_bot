@@ -1,5 +1,7 @@
 # Telegram bot with AI article Summarizer
 
+> **tl;dr:** we are building a text summarization bot for long articles, but I keep the code as general as possible, so consider it as a Python template for wrapping any model into a bot.
+
 Sometimes you don't want to read the whole article, but you want to know what it's about.
 
 This Telegram bot will extract the content of an article from a given URL and summarize it for you with the help of AI
