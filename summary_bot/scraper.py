@@ -58,10 +58,7 @@ class Scraper:
         self.browser = None
 
     async def set_browser(self):
-        if self.browser:
-            # await kill_browser_badly(self.browser)
-            pass
-        else:
+        if not self.browser:
             logger.info("Setting browser")
             if FROM_DOCKER:
                 executable_path = "google-chrome-stable"
@@ -79,15 +76,8 @@ class Scraper:
             "headless": self.headless,
             "args": [
                 "--lang=en-GB",
-                # "--no-zygote",
-                # "--ignore-certificate-errors",
-                # "--ignore-certificate-errors-spki-list",
                 '--user-agent="{}"'.format(HEADERS["User-Agent"]),
             ],
-            # "handleSIGINT": False,
-            # "handleSIGTERM": False,
-            # "handleSIGHUP": False,
-            # "ignoreHTTPSErrors": True,
         }
         if from_docker:
             args["args"].extend(
@@ -106,21 +96,16 @@ class Scraper:
         if not self.browser:
             await self.set_browser()
         page: Page = (await self.browser.pages())[0]
-
-        # set http headers
         _ = await asyncio.wait_for(
             page.setExtraHTTPHeaders(EXTRA_HTTP_HEADERS), timeout=self.timeout
         )
-        # set user agent
         _ = await asyncio.wait_for(
             asyncio.create_task(page.setUserAgent(HEADERS["User-Agent"])),
             timeout=self.timeout,
         )
-        # bring page to front
         _ = await asyncio.wait_for(
             asyncio.create_task(page.bringToFront()), timeout=self.timeout
         )
-        # load webpage
         load_task = asyncio.create_task(
             page.goto(url, waitUntil=WAIT_COND, timeout=30000)
         )

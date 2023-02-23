@@ -54,9 +54,7 @@ class SummaryModel(metaclass=Singleton):
         num_parts = len(input_id_chunks)
         if message:
             logger.info(f"Splitting the article into {num_parts} parts")
-            await message.reply(
-                f"Splitting the article into {num_parts} parts..."
-            )
+            await message.reply(f"Splitting the article into {num_parts} parts...")
         # we want to process the last chunk separately and do not pad it since it leads to poor results
         chunks = torch.stack(input_id_chunks[:-1])
         last_chunk = input_id_chunks[-1].unsqueeze(0)

@@ -1,9 +1,7 @@
 import os
 from datetime import datetime
 
-
 import pytest
-
 
 from summary_bot.summarizer import summarize_article
 
