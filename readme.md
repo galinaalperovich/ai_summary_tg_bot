@@ -1,5 +1,5 @@
 # Telegram bot with AI article Summarizer
-There is a blog post about this mini-project: https://medium.com/@galperovich/build-a-telegram-chatbot-with-any-ai-model-under-the-hood-24e0438c71f7
+There is a blog post about this mini-project: https://medium.com/@galperovich/build-a-telegram-chatbot-with-any-ai-model-under-the-hood-62f9a8675d81
 
 > **tl;dr:** we are building a text summarization bot for long articles, but I keep the code as general as possible, so consider it as a Python template for wrapping any model into a bot.
 
